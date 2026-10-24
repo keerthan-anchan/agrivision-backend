@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriVision AIoT</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0B1120] text-slate-100 min-h-screen p-4 flex flex-col items-center">
+  <div class="max-w-md w-full space-y-4">
+    <header class="flex justify-between items-center py-2 border-b border-slate-800">
+      <h1 class="text-xl font-bold text-emerald-400">AgriVision AIoT</h1>
+      <span class="flex items-center text-xs text-slate-400">
+        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span> System Active
+      </span>
+    </header>
+
+    <!-- Pump Status Card -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
+      <div class="flex justify-between items-center mb-2">
+        <span class="text-xs uppercase font-semibold text-slate-400">Motor Actuation</span>
+        <span id="pumpBadge" class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold">PUMP IDLE</span>
+      </div>
+      <p id="decisionReason" class="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+        Awaiting telemetry...
+      </p>
+    </div>
+
+    <!-- Sensor Metrics -->
+    <div class="grid grid-cols-2 gap-3">
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+        <span class="text-[11px] text-slate-400">Soil Moisture</span>
+        <div class="text-2xl font-bold text-cyan-400 mt-1"><span id="soilAvg">--</span>%</div>
+        <p class="text-[10px] text-slate-500">S1: <span id="soil1">--</span>% | S2: <span id="soil2">--</span>%</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
+        <span class="text-[11px] text-slate-400">Weather (Rain Prob)</span>
+        <div class="text-2xl font-bold text-amber-400 mt-1"><span id="rainProb">--</span>%</div>
+        <p class="text-[10px] text-slate-500">Clouds: <span id="cloudCover">--</span>%</p>
+      </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 col-span-2">
+        <span class="text-[11px] text-slate-400">Ambient Climate</span>
+        <div class="text-lg font-bold text-slate-200 mt-1"><span id="temp">--</span>°C &nbsp;|&nbsp; Humidity: <span id="humidity">--</span>%</div>
+      </div>
+    </div>
+
+    <!-- Leaf Health -->
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
+      <div class="flex justify-between items-center">
+        <span class="text-xs uppercase font-semibold text-slate-400">Leaf Disease AI Diagnosis</span>
+        <span id="diseaseConf" class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-mono">--%</span>
+      </div>
+      <div class="aspect-video w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
+        <img id="leafImg" src="/static/latest_leaf.jpg" alt="Leaf Snapshot" class="w-full h-full object-cover">
+      </div>
+      <h3 id="diseaseName" class="text-sm font-bold text-slate-100">No leaf analyzed yet</h3>
+      <p id="treatment" class="text-xs text-slate-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">Treatment instructions will appear here.</p>
+    </div>
+  </div>
+
+  <script>
+    async function updateUI() {
+      try {
+        const res = await fetch('/api/status');
+        const d = await res.json();
+        document.getElementById('soilAvg').innerText = d.soil_avg;
+        document.getElementById('soil1').innerText = d.soil_1;
+        document.getElementById('soil2').innerText = d.soil_2;
+        document.getElementById('temp').innerText = d.temp;
+        document.getElementById('humidity').innerText = d.humidity;
+        document.getElementById('rainProb').innerText = d.rain_prob;
+        document.getElementById('cloudCover').innerText = d.cloud_cover;
+        document.getElementById('decisionReason').innerText = d.decision_reason;
+
+        const badge = document.getElementById('pumpBadge');
+        if (d.pump_cmd === 'ON') {
+          badge.innerText = 'PUMP RUNNING';
+          badge.className = 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-xs px-3 py-1 rounded-full font-bold animate-pulse';
+        } else {
+          badge.innerText = 'PUMP IDLE';
+          badge.className = 'bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold';
+        }
+
+        if (d.disease_name) {
+          document.getElementById('diseaseName').innerText = d.disease_name;
+          document.getElementById('diseaseConf').innerText = d.disease_conf + '%';
+          document.getElementById('treatment').innerText = d.treatment;
+          if (d.image_url) document.getElementById('leafImg').src = d.image_url;
+        }
+      } catch (err) {}
+    }
+    setInterval(updateUI, 3000);
+    updateUI();
+  </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+flask
+gunicorn
+requests
+pillow
+numpy
+pandas
+scikit-learn
+joblib
+torch --extra-index-url https://download.pytorch.org/whl/cpu
+torchvision --extra-index-url https://download.pytorch.org/whl/cpu
