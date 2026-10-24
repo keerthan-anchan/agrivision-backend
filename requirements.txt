@@ -3,9 +3,9 @@ flask
 gunicorn
 requests
 pillow
-numpy<2.0.0
+numpy
 pandas
 scikit-learn
 joblib
-torch==2.2.2+cpu
-torchvision==0.17.2+cpu
+torch==2.14.1+cpu
+torchvision==0.29.1+cpu
