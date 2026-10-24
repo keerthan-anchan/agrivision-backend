@@ -1,10 +1,11 @@
+--extra-index-url https://download.pytorch.org/whl/cpu
 flask
 gunicorn
 requests
 pillow
-numpy
+numpy<2.0.0
 pandas
 scikit-learn
 joblib
-torch --extra-index-url https://download.pytorch.org/whl/cpu
-torchvision --extra-index-url https://download.pytorch.org/whl/cpu
+torch==2.2.2+cpu
+torchvision==0.17.2+cpu
