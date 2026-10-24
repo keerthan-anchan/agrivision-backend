@@ -3,94 +3,520 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AgriVision AIoT</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <title>AgriVision AIoT | Smart Farm Command Center</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg-base: #0B0F19;
+      --bg-surface: #111827;
+      --bg-card: #182234;
+      --border-color: rgba(255, 255, 255, 0.08);
+      --primary: #10B981;
+      --primary-glow: rgba(16, 185, 129, 0.25);
+      --accent-blue: #3B82F6;
+      --accent-cyan: #06B6D4;
+      --accent-amber: #F59E0B;
+      --accent-red: #EF4444;
+      --text-main: #F9FAFB;
+      --text-muted: #9CA3AF;
+      --font-sans: 'Plus Jakarta Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation */
+    header {
+      background: rgba(17, 24, 39, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 1rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      background: linear-gradient(135deg, #059669, #10B981);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 0 15px var(--primary-glow);
+      font-size: 1.2rem;
+      color: white;
+    }
+
+    .brand-title {
+      font-weight: 800;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-title span {
+      color: var(--primary);
+    }
+
+    .live-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.8rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #34D399;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { transform: scale(1); box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+    }
+
+    /* Layout */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    /* Grid Layout */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .dashboard-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, border-color 0.2s ease;
+    }
+
+    .dashboard-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .card-icon {
+      font-size: 1.25rem;
+      opacity: 0.8;
+    }
+
+    .card-value {
+      font-size: 2.25rem;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: baseline;
+      gap: 0.25rem;
+      letter-spacing: -0.03em;
+    }
+
+    .card-unit {
+      font-size: 1rem;
+      font-family: var(--font-sans);
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .progress-bar-container {
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 999px;
+      margin-top: 1rem;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 999px;
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Section Split */
+    .content-split {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 992px) {
+      .content-split {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* AI Decision Banner */
+    .decision-banner {
+      background: linear-gradient(135deg, rgba(24, 34, 52, 0.8), rgba(17, 24, 39, 0.9));
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .pump-status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+
+    .status-on {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #F87171;
+    }
+
+    .status-off {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34D399;
+    }
+
+    .reason-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      line-height: 1.5;
+      color: #E2E8F0;
+      border-left: 3px solid var(--accent-blue);
+    }
+
+    /* Disease Diagnosis Card */
+    .diagnosis-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .leaf-view {
+      width: 100%;
+      height: 240px;
+      border-radius: 12px;
+      background: #0D131F;
+      border: 1px dashed rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .leaf-view img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .leaf-placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .treatment-callout {
+      background: rgba(245, 158, 11, 0.08);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 10px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      color: #FCD34D;
+      line-height: 1.5;
+    }
+
+    footer {
+      margin-top: auto;
+      border-top: 1px solid var(--border-color);
+      padding: 1.5rem 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  </style>
 </head>
-<body class="bg-[#0B1120] text-slate-100 min-h-screen p-4 flex flex-col items-center">
-  <div class="max-w-md w-full space-y-4">
-    <header class="flex justify-between items-center py-2 border-b border-slate-800">
-      <h1 class="text-xl font-bold text-emerald-400">AgriVision AIoT</h1>
-      <span class="flex items-center text-xs text-slate-400">
-        <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse mr-2"></span> System Active
-      </span>
-    </header>
+<body>
 
-    <!-- Pump Status Card -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl">
-      <div class="flex justify-between items-center mb-2">
-        <span class="text-xs uppercase font-semibold text-slate-400">Motor Actuation</span>
-        <span id="pumpBadge" class="bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold">PUMP IDLE</span>
+  <header>
+    <div class="brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-seedling"></i>
       </div>
-      <p id="decisionReason" class="text-xs text-slate-300 bg-slate-950 p-2.5 rounded-xl border border-slate-800">
-        Awaiting telemetry...
-      </p>
-    </div>
-
-    <!-- Sensor Metrics -->
-    <div class="grid grid-cols-2 gap-3">
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-        <span class="text-[11px] text-slate-400">Soil Moisture</span>
-        <div class="text-2xl font-bold text-cyan-400 mt-1"><span id="soilAvg">--</span>%</div>
-        <p class="text-[10px] text-slate-500">S1: <span id="soil1">--</span>% | S2: <span id="soil2">--</span>%</p>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3">
-        <span class="text-[11px] text-slate-400">Weather (Rain Prob)</span>
-        <div class="text-2xl font-bold text-amber-400 mt-1"><span id="rainProb">--</span>%</div>
-        <p class="text-[10px] text-slate-500">Clouds: <span id="cloudCover">--</span>%</p>
-      </div>
-      <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3 col-span-2">
-        <span class="text-[11px] text-slate-400">Ambient Climate</span>
-        <div class="text-lg font-bold text-slate-200 mt-1"><span id="temp">--</span>°C &nbsp;|&nbsp; Humidity: <span id="humidity">--</span>%</div>
+      <div>
+        <div class="brand-title">Agri<span>Vision</span> AIoT</div>
       </div>
     </div>
-
-    <!-- Leaf Health -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-xl space-y-2">
-      <div class="flex justify-between items-center">
-        <span class="text-xs uppercase font-semibold text-slate-400">Leaf Disease AI Diagnosis</span>
-        <span id="diseaseConf" class="bg-emerald-500/10 text-emerald-400 text-xs px-2 py-0.5 rounded-full font-mono">--%</span>
-      </div>
-      <div class="aspect-video w-full bg-slate-950 rounded-xl overflow-hidden border border-slate-800">
-        <img id="leafImg" src="/static/latest_leaf.jpg" alt="Leaf Snapshot" class="w-full h-full object-cover">
-      </div>
-      <h3 id="diseaseName" class="text-sm font-bold text-slate-100">No leaf analyzed yet</h3>
-      <p id="treatment" class="text-xs text-slate-400 bg-slate-950 p-2.5 rounded-xl border border-slate-800">Treatment instructions will appear here.</p>
+    <div class="live-badge">
+      <div class="pulse-dot"></div>
+      Cloud Telemetry Active
     </div>
-  </div>
+  </header>
+
+  <main class="container">
+    <!-- Top 4 Telemetry Metrics -->
+    <section class="metrics-grid">
+      <!-- Moisture Average -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span class="card-title">Soil Moisture (Avg)</span>
+          <i class="fa-solid fa-droplet card-icon" style="color: var(--accent-cyan);"></i>
+        </div>
+        <div class="card-value">
+          <span id="soilAvg">0.0</span>
+          <span class="card-unit">%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="soilBar" style="width: 0%; background: var(--accent-cyan);"></div>
+        </div>
+      </div>
+
+      <!-- Temperature -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span class="card-title">Canopy Temp</span>
+          <i class="fa-solid fa-temperature-half card-icon" style="color: var(--accent-amber);"></i>
+        </div>
+        <div class="card-value">
+          <span id="temp">0.0</span>
+          <span class="card-unit">°C</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="tempBar" style="width: 0%; background: var(--accent-amber);"></div>
+        </div>
+      </div>
+
+      <!-- Humidity -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span class="card-title">Air Humidity</span>
+          <i class="fa-solid fa-wind card-icon" style="color: var(--accent-blue);"></i>
+        </div>
+        <div class="card-value">
+          <span id="humidity">0.0</span>
+          <span class="card-unit">%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="humBar" style="width: 0%; background: var(--accent-blue);"></div>
+        </div>
+      </div>
+
+      <!-- Weather API Forecast -->
+      <div class="dashboard-card">
+        <div class="card-header">
+          <span class="card-title">Rain Probability</span>
+          <i class="fa-solid fa-cloud-rain card-icon" style="color: #818CF8;"></i>
+        </div>
+        <div class="card-value">
+          <span id="rainProb">0</span>
+          <span class="card-unit">%</span>
+        </div>
+        <div class="progress-bar-container">
+          <div class="progress-bar" id="rainBar" style="width: 0%; background: #818CF8;"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Diagnostic & Control Section -->
+    <section class="content-split">
+      <!-- Left: Irrigation Logic & Sensor Details -->
+      <div class="decision-banner">
+        <div class="pump-status-row">
+          <div>
+            <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.25rem;">Irrigation Actuator</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">Random Forest Multi-Variable Decision</p>
+          </div>
+          <div id="pumpBadge" class="status-badge status-off">
+            <i class="fa-solid fa-power-off"></i>
+            <span id="pumpStateText">PUMP OFF</span>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sensor Probe 1</span>
+            <div style="font-size: 1.25rem; font-family: var(--font-mono); font-weight: 700;" id="soil1">0.0%</div>
+          </div>
+          <div style="background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sensor Probe 2</span>
+            <div style="font-size: 1.25rem; font-family: var(--font-mono); font-weight: 700;" id="soil2">0.0%</div>
+          </div>
+        </div>
+
+        <div>
+          <span style="font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">Inference Telemetry Reason</span>
+          <div class="reason-box" id="decisionReason" style="margin-top: 0.5rem;">
+            Awaiting telemetry from ESP32-DevKit...
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Tomato Leaf CNN Diagnosis -->
+      <div class="diagnosis-panel">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 style="font-size: 1.1rem; font-weight: 700;">Vision Diagnosis</h3>
+          <span id="confidenceTag" style="font-size: 0.8rem; font-weight: 600; color: var(--primary);">0% Confidence</span>
+        </div>
+
+        <div class="leaf-view">
+          <div id="leafPlaceholder" class="leaf-placeholder">
+            <i class="fa-solid fa-camera" style="font-size: 2rem;"></i>
+            <span>Awaiting ESP32-CAM Snapshot</span>
+          </div>
+          <img id="leafImg" style="display: none;" alt="Leaf View">
+        </div>
+
+        <div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: #F9FAFB;" id="diseaseName">
+            Awaiting leaf scan...
+          </div>
+          <div class="treatment-callout" id="treatmentText" style="margin-top: 0.75rem;">
+            Hold camera 10–15cm from leaf for automatic screening.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    AgriVision AIoT System &bull; Powered by ESP32, Open-Meteo & PyTorch CPU
+  </footer>
 
   <script>
-    async function updateUI() {
+    async function updateDashboard() {
       try {
-        const res = await fetch('/api/status');
-        const d = await res.json();
-        document.getElementById('soilAvg').innerText = d.soil_avg;
-        document.getElementById('soil1').innerText = d.soil_1;
-        document.getElementById('soil2').innerText = d.soil_2;
-        document.getElementById('temp').innerText = d.temp;
-        document.getElementById('humidity').innerText = d.humidity;
-        document.getElementById('rainProb').innerText = d.rain_prob;
-        document.getElementById('cloudCover').innerText = d.cloud_cover;
-        document.getElementById('decisionReason').innerText = d.decision_reason;
+        const res = await fetch('/api/state');
+        if (!res.ok) return;
+        const data = await res.json();
 
-        const badge = document.getElementById('pumpBadge');
-        if (d.pump_cmd === 'ON') {
-          badge.innerText = 'PUMP RUNNING';
-          badge.className = 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 text-xs px-3 py-1 rounded-full font-bold animate-pulse';
+        // Update telemetry cards
+        document.getElementById('soilAvg').innerText = (data.soil_avg || 0).toFixed(1);
+        document.getElementById('soilBar').style.width = Math.min(data.soil_avg || 0, 100) + '%';
+
+        document.getElementById('temp').innerText = (data.temp || 0).toFixed(1);
+        document.getElementById('tempBar').style.width = Math.min(((data.temp || 0) / 50) * 100, 100) + '%';
+
+        document.getElementById('humidity').innerText = (data.humidity || 0).toFixed(1);
+        document.getElementById('humBar').style.width = Math.min(data.humidity || 0, 100) + '%';
+
+        document.getElementById('rainProb').innerText = data.rain_prob || 0;
+        document.getElementById('rainBar').style.width = (data.rain_prob || 0) + '%';
+
+        document.getElementById('soil1').innerText = (data.soil_1 || 0).toFixed(1) + '%';
+        document.getElementById('soil2').innerText = (data.soil_2 || 0).toFixed(1) + '%';
+        document.getElementById('decisionReason').innerText = data.decision_reason || 'Operating normally.';
+
+        // Update Actuator Badge
+        const pumpBadge = document.getElementById('pumpBadge');
+        const pumpText = document.getElementById('pumpStateText');
+        if (data.relay === 'ON') {
+          pumpBadge.className = 'status-badge status-on';
+          pumpBadge.innerHTML = '<i class="fa-solid fa-faucet-drip"></i> PUMP ACTIVE';
         } else {
-          badge.innerText = 'PUMP IDLE';
-          badge.className = 'bg-slate-800 text-slate-300 text-xs px-3 py-1 rounded-full font-bold';
+          pumpBadge.className = 'status-badge status-off';
+          pumpBadge.innerHTML = '<i class="fa-solid fa-power-off"></i> PUMP IDLE';
         }
 
-        if (d.disease_name) {
-          document.getElementById('diseaseName').innerText = d.disease_name;
-          document.getElementById('diseaseConf').innerText = d.disease_conf + '%';
-          document.getElementById('treatment').innerText = d.treatment;
-          if (d.image_url) document.getElementById('leafImg').src = d.image_url;
+        // Update Vision Disease Data
+        if (data.disease) {
+          document.getElementById('diseaseName').innerText = data.disease;
+          document.getElementById('confidenceTag').innerText = (data.confidence || 0) + '% Confidence';
+          document.getElementById('treatmentText').innerText = data.treatment || 'No specific treatment recommended.';
         }
-      } catch (err) {}
+      } catch (err) {
+        console.error('Failed to sync state:', err);
+      }
     }
-    setInterval(updateUI, 3000);
-    updateUI();
+
+    // Auto-poll the backend state every 3 seconds
+    setInterval(updateDashboard, 3000);
+    updateDashboard();
   </script>
 </body>
 </html>
