@@ -1,49 +1,55 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AgriVision AIoT | Precision Tomato Command</title>
-  
+  <title>AgriVision | Smart Tomato Farm Hub</title>
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
-    :root {
-      --bg-dark: #080C14;
-      --card-bg: rgba(17, 24, 39, 0.75);
-      --card-border: rgba(255, 255, 255, 0.07);
+    /* Dark Theme Default */
+    :root[data-theme="dark"] {
+      --bg: #090E17;
+      --card: rgba(18, 25, 38, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --text: #F8FAFC;
+      --text-sub: #94A3B8;
       --emerald: #10B981;
-      --emerald-glow: rgba(16, 185, 129, 0.2);
       --cyan: #06B6D4;
       --amber: #F59E0B;
-      --indigo: #6366F1;
-      --rose: #F43F5E;
-      --text-main: #F3F4F6;
-      --text-dim: #94A3B8;
+      --blue: #3B82F6;
+      --rose: #EF4444;
+      --header-bg: rgba(13, 19, 33, 0.9);
+      --card-inner: rgba(255, 255, 255, 0.03);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    
-    body {
-      background-color: var(--bg-dark);
-      background-image: radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 40%),
-                        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 40%);
-      color: var(--text-main);
-      font-family: 'Plus Jakarta Sans', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    /* High-Contrast Sunlight Mode for Open Fields */
+    :root[data-theme="light"] {
+      --bg: #F1F5F9;
+      --card: #FFFFFF;
+      --border: #CBD5E1;
+      --text: #0F172A;
+      --text-sub: #475569;
+      --emerald: #059669;
+      --cyan: #0891B2;
+      --amber: #D97706;
+      --blue: #2563EB;
+      --rose: #DC2626;
+      --header-bg: #FFFFFF;
+      --card-inner: #F8FAFC;
     }
 
-    /* Top Glass Navbar */
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Plus Jakarta Sans', sans-serif; }
+    body { background-color: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; transition: background 0.3s ease; }
+
+    /* Farmer Header */
     header {
-      background: rgba(13, 19, 33, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--card-border);
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -51,490 +57,475 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      backdrop-filter: blur(12px);
     }
 
-    .brand-group {
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .brand i { color: var(--emerald); font-size: 1.25rem; }
+
+    .header-actions {
       display: flex;
       align-items: center;
       gap: 0.65rem;
     }
 
-    .brand-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #059669, #10B981);
-      border-radius: 10px;
-      display: grid;
-      place-items: center;
-      color: white;
-      font-size: 1.05rem;
-      box-shadow: 0 0 15px var(--emerald-glow);
-    }
-
-    .brand-title {
-      font-family: 'Space Grotesk', sans-serif;
+    .theme-toggle {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.45rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.75rem;
       font-weight: 700;
-      font-size: 1.15rem;
-      letter-spacing: -0.02em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
     }
-    .brand-title span { color: var(--emerald); }
 
-    .status-badge {
+    .connection-pill {
       display: inline-flex;
       align-items: center;
-      gap: 0.45rem;
-      padding: 0.35rem 0.75rem;
+      gap: 0.4rem;
+      padding: 0.4rem 0.8rem;
       border-radius: 999px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      letter-spacing: 0.06em;
-      transition: all 0.3s ease;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
     }
+    .conn-online { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); color: var(--emerald); }
+    .conn-offline { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--rose); color: var(--rose); }
 
-    .status-online {
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.4);
-      color: #34D399;
-    }
+    .pulse { width: 7px; height: 7px; border-radius: 50%; background: currentColor; animation: blip 1.6s infinite; }
+    @keyframes blip { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-    .status-offline {
-      background: rgba(244, 63, 94, 0.12);
-      border: 1px solid rgba(244, 63, 94, 0.4);
-      color: #FB7185;
-    }
-
-    .pulse-dot {
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: currentColor;
-      animation: pulse 1.8s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.3; transform: scale(0.85); }
-      100% { opacity: 1; transform: scale(1); }
-    }
-
-    /* Main Container */
     main {
       flex: 1;
+      max-width: 1200px;
       width: 100%;
-      max-width: 1280px;
       margin: 0 auto;
-      padding: 1rem 1rem 2rem 1rem;
+      padding: 1rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
     }
 
-    /* Metric Grid */
-    .metric-grid {
+    /* Overall Crop Health Banner */
+    .health-banner {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    }
+
+    .score-circle {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .score-number {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--emerald);
+      line-height: 1;
+    }
+
+    /* Farmer Grid */
+    .grid-cards {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 0.75rem;
+      gap: 0.85rem;
     }
-
     @media (min-width: 768px) {
-      .metric-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 1rem;
-      }
+      .grid-cards { grid-template-columns: repeat(4, 1fr); gap: 1rem; }
     }
 
-    .glass-card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
+    .f-card {
+      background: var(--card);
+      border: 1px solid var(--border);
       border-radius: 16px;
       padding: 1rem;
-      position: relative;
-      overflow: hidden;
-      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.04);
     }
 
-    .metric-head {
+    .card-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
-      font-size: 0.72rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--text-dim);
-    }
-
-    .metric-body {
-      display: flex;
-      align-items: baseline;
-      gap: 0.2rem;
-      margin-top: 0.5rem;
-    }
-
-    .metric-value {
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.85rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      letter-spacing: -0.04em;
+      color: var(--text-sub);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
 
-    .metric-unit {
-      font-size: 0.85rem;
-      color: var(--text-dim);
+    .metric-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.9rem;
+      font-weight: 800;
+      margin: 0.5rem 0 0.2rem 0;
+    }
+    .metric-unit { font-size: 0.9rem; color: var(--text-sub); }
+
+    .sub-note {
+      font-size: 0.72rem;
+      color: var(--text-sub);
       font-weight: 600;
     }
 
-    .progress-track {
-      width: 100%;
-      height: 4px;
-      background: rgba(255, 255, 255, 0.06);
-      border-radius: 999px;
-      margin-top: 0.75rem;
-      overflow: hidden;
-    }
-
-    .progress-fill {
-      height: 100%;
-      border-radius: 999px;
-      transition: width 0.6s ease;
-    }
-
-    /* Core Diagnostic Split */
-    .dashboard-split {
+    /* Split Sections */
+    .split-section {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1rem;
     }
-
     @media (min-width: 992px) {
-      .dashboard-split {
-        grid-template-columns: 1.15fr 0.85fr;
-      }
+      .split-section { grid-template-columns: 1.15fr 0.85fr; }
     }
 
-    /* Actuator Section */
-    .actuator-bar {
+    .section-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 1.25rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 800;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 0.85rem;
-      border-bottom: 1px solid var(--card-border);
-      margin-bottom: 0.85rem;
+      margin-bottom: 1rem;
     }
 
-    .actuator-btn {
+    /* Water Valve Tag */
+    .valve-badge {
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      font-size: 0.82rem;
+      font-weight: 800;
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.5rem 1rem;
-      border-radius: 10px;
-      font-size: 0.8rem;
-      font-weight: 700;
+      gap: 0.45rem;
       letter-spacing: 0.04em;
-      transition: all 0.3s ease;
     }
+    .valve-on { background: rgba(239, 68, 68, 0.15); border: 1px solid var(--rose); color: var(--rose); }
+    .valve-off { background: rgba(16, 185, 129, 0.15); border: 1px solid var(--emerald); color: var(--emerald); }
 
-    .pump-active {
-      background: rgba(244, 63, 94, 0.15);
-      border: 1px solid rgba(244, 63, 94, 0.4);
-      color: #FB7185;
-      box-shadow: 0 0 12px rgba(244, 63, 94, 0.2);
-    }
-
-    .pump-idle {
-      background: rgba(16, 185, 129, 0.12);
-      border: 1px solid rgba(16, 185, 129, 0.3);
-      color: #34D399;
-    }
-
-    .root-zone-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
-      margin-bottom: 0.85rem;
-    }
-
-    .root-pill {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--card-border);
-      padding: 0.75rem;
+    .summary-box {
+      background: var(--card-inner);
+      border-left: 4px solid var(--emerald);
       border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      font-weight: 600;
+      margin-top: 1rem;
     }
 
-    .root-pill span {
-      display: block;
-      font-size: 0.68rem;
-      text-transform: uppercase;
-      color: var(--text-dim);
+    /* Weather Strip */
+    .weather-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.65rem;
+      margin-top: 1rem;
+    }
+
+    .weather-item {
+      background: var(--card-inner);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem;
+      text-align: center;
+    }
+    .weather-item span { display: block; font-size: 0.68rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase; }
+    .weather-item strong { display: block; font-size: 1.15rem; font-family: 'JetBrains Mono'; margin-top: 0.2rem; }
+
+    /* Foliage Viewer */
+    .foliage-frame {
+      width: 100%;
+      height: 230px;
+      border-radius: 14px;
+      background: var(--card-inner);
+      border: 2px dashed var(--border);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      margin-bottom: 1rem;
+    }
+    .foliage-frame img { width: 100%; height: 100%; object-fit: cover; }
+
+    .remedy-box {
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
       font-weight: 600;
     }
 
-    .root-pill strong {
-      display: block;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 1.2rem;
-      margin-top: 0.25rem;
-    }
-
-    .terminal-box {
-      background: #050811;
-      border: 1px solid var(--card-border);
-      border-left: 3px solid var(--cyan);
-      border-radius: 10px;
-      padding: 0.85rem 1rem;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.78rem;
-      line-height: 1.5;
-      color: #CBD5E1;
-      word-break: break-word;
-    }
-
-    /* Vision Inspection Section */
-    .leaf-viewport {
-      width: 100%;
-      height: 220px;
-      border-radius: 12px;
-      background: #050811;
-      border: 1px dashed var(--card-border);
-      display: grid;
-      place-items: center;
-      margin: 0.85rem 0;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .leaf-viewport img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .treatment-card {
-      background: rgba(245, 158, 11, 0.06);
-      border: 1px solid rgba(245, 158, 11, 0.25);
-      border-radius: 10px;
-      padding: 0.85rem;
-      font-size: 0.8rem;
-      color: #FDE68A;
-      line-height: 1.45;
-    }
-
     footer {
-      border-top: 1px solid var(--card-border);
-      padding: 1.25rem;
+      border-top: 1px solid var(--border);
+      padding: 1rem;
       text-align: center;
-      font-size: 0.72rem;
-      color: var(--text-dim);
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
 
   <header>
-    <div class="brand-group">
-      <div class="brand-icon"><i class="fa-solid fa-leaf"></i></div>
-      <div class="brand-title">Agri<span>Vision</span></div>
+    <div class="brand">
+      <i class="fa-solid fa-seedling"></i>
+      <div>AgriVision <span>Farm</span></div>
     </div>
-    <div id="statusPill" class="status-badge status-offline">
-      <div class="pulse-dot"></div>
-      <span id="syncText">CONNECTING...</span>
+    <div class="header-actions">
+      <button class="theme-toggle" id="themeBtn" onclick="toggleTheme()">
+        <i class="fa-solid fa-sun"></i> Field Mode
+      </button>
+      <div id="connPill" class="connection-pill conn-offline">
+        <div class="pulse"></div>
+        <span id="connText">CONNECTING</span>
+      </div>
     </div>
   </header>
 
   <main>
-    <!-- Top 4 Telemetry Metrics -->
-    <div class="metric-grid">
-      <div class="glass-card">
-        <div class="metric-head">
-          <span>Soil Active</span>
-          <i class="fa-solid fa-droplet" style="color: var(--cyan);"></i>
+    <!-- Crop Health Score Banner -->
+    <div class="health-banner">
+      <div class="score-circle">
+        <div class="score-number" id="cropScore">--</div>
+        <div>
+          <div style="font-size: 1.1rem; font-weight: 800;">Tomato Crop Health</div>
+          <div style="font-size: 0.78rem; color: var(--text-sub);">Calculated from root hydration & foliage scan</div>
         </div>
-        <div class="metric-body">
-          <span class="metric-value" id="val_soil">0.0</span>
-          <span class="metric-unit">%</span>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="bar_soil" style="width: 0%; background: var(--cyan);"></div></div>
       </div>
-
-      <div class="glass-card">
-        <div class="metric-head">
-          <span>Temperature</span>
-          <i class="fa-solid fa-temperature-half" style="color: var(--amber);"></i>
-        </div>
-        <div class="metric-body">
-          <span class="metric-value" id="val_temp">0.0</span>
-          <span class="metric-unit">°C</span>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="bar_temp" style="width: 0%; background: var(--amber);"></div></div>
-      </div>
-
-      <div class="glass-card">
-        <div class="metric-head">
-          <span>Humidity</span>
-          <i class="fa-solid fa-wind" style="color: var(--indigo);"></i>
-        </div>
-        <div class="metric-body">
-          <span class="metric-value" id="val_hum">0.0</span>
-          <span class="metric-unit">%</span>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="bar_hum" style="width: 0%; background: var(--indigo);"></div></div>
-      </div>
-
-      <div class="glass-card">
-        <div class="metric-head">
-          <span>Rain Risk</span>
-          <i class="fa-solid fa-cloud-rain" style="color: #38BDF8;"></i>
-        </div>
-        <div class="metric-body">
-          <span class="metric-value" id="val_rain">0</span>
-          <span class="metric-unit">%</span>
-        </div>
-        <div class="progress-track"><div class="progress-fill" id="bar_rain" style="width: 0%; background: #38BDF8;"></div></div>
+      <div style="font-size: 0.85rem; font-weight: 700; color: var(--emerald);" id="healthStatusTag">
+        <i class="fa-solid fa-circle-check"></i> Crop Conditions Normal
       </div>
     </div>
 
-    <!-- Dual Operational Split -->
-    <div class="dashboard-split">
-      
-      <!-- Actuation & Dual Depth -->
-      <div class="glass-card">
-        <div class="actuator-bar">
-          <div>
-            <h2 style="font-size: 1.05rem; font-weight: 700;">Drip Irrigation Pump</h2>
-            <p style="font-size: 0.72rem; color: var(--text-dim);">Random Forest Precision Dosing</p>
-          </div>
-          <div id="pumpTag" class="actuator-btn pump-idle">
-            <i class="fa-solid fa-power-off"></i> <span id="pumpText">PUMP IDLE</span>
+    <!-- 4 Key Farm Metrics -->
+    <div class="grid-cards">
+      <div class="f-card">
+        <div class="card-top">
+          <span>Field Moisture</span>
+          <i class="fa-solid fa-droplet" style="color: var(--cyan);"></i>
+        </div>
+        <div class="metric-num"><span id="valMoist">0.0</span><span class="metric-unit">%</span></div>
+        <div class="sub-note" id="moistNote">Root water level</div>
+      </div>
+
+      <div class="f-card">
+        <div class="card-top">
+          <span>Field Temp</span>
+          <i class="fa-solid fa-temperature-three-quarters" style="color: var(--amber);"></i>
+        </div>
+        <div class="metric-num"><span id="valTemp">0.0</span><span class="metric-unit">°C</span></div>
+        <div class="sub-note">Canopy warmth</div>
+      </div>
+
+      <div class="f-card">
+        <div class="card-top">
+          <span>Field Humidity</span>
+          <i class="fa-solid fa-cloud" style="color: var(--blue);"></i>
+        </div>
+        <div class="metric-num"><span id="valHum">0.0</span><span class="metric-unit">%</span></div>
+        <div class="sub-note">Air moisture content</div>
+      </div>
+
+      <div class="f-card">
+        <div class="card-top">
+          <span>Rain Forecast</span>
+          <i class="fa-solid fa-cloud-rain" style="color: #60A5FA;"></i>
+        </div>
+        <div class="metric-num"><span id="valRain">0</span><span class="metric-unit">%</span></div>
+        <div class="sub-note" id="rainNote">Next 3 hours</div>
+      </div>
+    </div>
+
+    <!-- Split: Irrigation Action + Foliage Health -->
+    <div class="split-section">
+      <!-- Water System -->
+      <div class="section-card">
+        <div class="section-title">
+          <span>Watering Status</span>
+          <div id="pumpTag" class="valve-badge valve-off">
+            <i class="fa-solid fa-faucet"></i> <span id="pumpText">PUMP RESTING</span>
           </div>
         </div>
 
-        <div class="root-zone-grid">
-          <div class="root-pill">
-            <span>Probe 1 (Shallow 5–10cm)</span>
-            <strong id="val_s1">0.0%</strong>
-          </div>
-          <div class="root-pill">
-            <span>Probe 2 (Deep 20–25cm)</span>
-            <strong id="val_s2">0.0%</strong>
-          </div>
+        <div style="font-size: 0.82rem; color: var(--text-sub); font-weight: 700; text-transform: uppercase;">
+          Farm Activity Update
+        </div>
+        <div class="summary-box" id="actionSummary">
+          Analyzing field conditions...
         </div>
 
-        <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; font-weight: 600; margin-bottom: 0.4rem;">
-          Inference Engine Telemetry Log
-        </div>
-        <div class="terminal-box" id="val_reason">
-          Awaiting telemetry sync...
+        <div class="weather-strip">
+          <div class="weather-item">
+            <span>Wind Speed</span>
+            <strong id="valWind">0 km/h</strong>
+          </div>
+          <div class="weather-item">
+            <span>Sun / UV Index</span>
+            <strong id="valUV">0.0</strong>
+          </div>
+          <div class="weather-item">
+            <span>Vapor Pull (VPD)</span>
+            <strong id="valVPD">0.0 kPa</strong>
+          </div>
         </div>
       </div>
 
       <!-- Tomato Leaf Diagnosis -->
-      <div class="glass-card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-          <h2 style="font-size: 1.05rem; font-weight: 700;">Tomato Foliage Vision</h2>
-          <span id="val_conf" style="font-size: 0.75rem; font-weight: 700; color: var(--emerald);">0% Conf</span>
+      <div class="section-card">
+        <div class="section-title">
+          <span>Foliage Health Inspection</span>
+          <span style="font-size: 0.8rem; font-weight: 700; color: var(--emerald);" id="leafAccuracy">0% Conf</span>
         </div>
 
-        <div class="leaf-viewport" id="leafBox">
-          <div id="camPlaceholder" style="color: var(--text-dim); font-size: 0.8rem; text-align: center;">
-            <i class="fa-solid fa-camera" style="font-size: 1.8rem; margin-bottom: 0.5rem; display: block; opacity: 0.5;"></i>
-            Awaiting ESP32-CAM Leaf Snapshot
+        <div class="foliage-frame" id="photoBox">
+          <div id="noPhotoText" style="color: var(--text-sub); font-size: 0.85rem; text-align: center;">
+            <i class="fa-solid fa-camera" style="font-size: 2rem; display: block; margin-bottom: 0.4rem; opacity: 0.4;"></i>
+            Awaiting Foliage Snapshot
           </div>
-          <img id="leafImg" style="display: none;" alt="Leaf Inspection">
+          <img id="leafImg" style="display: none;" alt="Leaf Image">
         </div>
 
-        <div style="font-size: 1.05rem; font-weight: 700;" id="val_disease">Awaiting frame...</div>
-        <div class="treatment-card" id="val_treatment" style="margin-top: 0.5rem;">
-          Hold the ESP32-CAM 10–15 cm from foliage.
+        <div style="font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem;" id="diseaseHeading">
+          Healthy Foliage
+        </div>
+        <div class="remedy-box" id="remedyText">
+          Leaves look good. Maintain standard drip cycles.
         </div>
       </div>
-
     </div>
   </main>
 
   <footer>
-    AgriVision AIoT Command • Edge ESP32 Telemetry Active
+    AgriVision Precision Farm Automation • Designed for Tomato Cultivation
   </footer>
 
   <script>
-    async function syncDashboard() {
-      try {
-        const res = await fetch('/api/state', {
-          method: 'GET',
-          headers: { 'Accept': 'application/json' },
-          cache: 'no-cache'
-        });
-
-        if (!res.ok) throw new Error('HTTP ' + res.status);
-        const data = await res.json();
-
-        // 1. Connection Tag
-        const statusPill = document.getElementById('statusPill');
-        statusPill.className = 'status-badge status-online';
-        document.getElementById('syncText').innerText = 'ONLINE';
-
-        // 2. Metrics & Progress Bars
-        const s1 = Number(data.soil_1 || 0);
-        const s2 = Number(data.soil_2 || 0);
-        const sAvg = (data.soil_avg != null) ? Number(data.soil_avg) : ((s1 + s2) / 2);
-        const temp = Number(data.temp || 0);
-        const hum = Number(data.humidity || 0);
-        const rain = Number(data.rain_prob || 0);
-
-        document.getElementById('val_soil').innerText = sAvg.toFixed(1);
-        document.getElementById('bar_soil').style.width = Math.min(Math.max(sAvg, 0), 100) + '%';
-
-        document.getElementById('val_s1').innerText = s1.toFixed(1) + '%';
-        document.getElementById('val_s2').innerText = s2.toFixed(1) + '%';
-
-        document.getElementById('val_temp').innerText = temp.toFixed(1);
-        document.getElementById('bar_temp').style.width = Math.min(Math.max((temp / 50) * 100, 0), 100) + '%';
-
-        document.getElementById('val_hum').innerText = hum.toFixed(1);
-        document.getElementById('bar_hum').style.width = Math.min(Math.max(hum, 0), 100) + '%';
-
-        document.getElementById('val_rain').innerText = rain;
-        document.getElementById('bar_rain').style.width = Math.min(Math.max(rain, 0), 100) + '%';
-
-        document.getElementById('val_reason').innerText = data.decision_reason || 'System healthy.';
-
-        // 3. Actuator Badge
-        const pumpTag = document.getElementById('pumpTag');
-        const pumpText = document.getElementById('pumpText');
-        if (data.relay === 'ON') {
-          pumpTag.className = 'actuator-btn pump-active';
-          pumpText.innerHTML = '<i class="fa-solid fa-faucet-drip"></i> PUMP ACTIVE';
-        } else {
-          pumpTag.className = 'actuator-btn pump-idle';
-          pumpText.innerHTML = '<i class="fa-solid fa-power-off"></i> PUMP IDLE';
-        }
-
-        // 4. Tomato Vision
-        if (data.disease) {
-          document.getElementById('val_disease').innerText = data.disease;
-          document.getElementById('val_conf').innerText = (data.confidence || 0) + '% Conf';
-          document.getElementById('val_treatment').innerText = data.treatment || 'No treatment required.';
-        }
-
-        // 5. Image rendering
-        if (data.leaf_image) {
-          const img = document.getElementById('leafImg');
-          const placeholder = document.getElementById('camPlaceholder');
-          img.src = 'data:image/jpeg;base64,' + data.leaf_image;
-          img.style.display = 'block';
-          placeholder.style.display = 'none';
-        }
-
-      } catch (err) {
-        console.warn('Dashboard sync issue:', err);
-        const statusPill = document.getElementById('statusPill');
-        statusPill.className = 'status-badge status-offline';
-        document.getElementById('syncText').innerText = 'OFFLINE';
+    // Sunlight / Night Mode Toggle
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme');
+      const next = current === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('agri_theme', next);
+      
+      const btn = document.getElementById('themeBtn');
+      if (next === 'light') {
+        btn.innerHTML = '<i class="fa-solid fa-moon"></i> Night Mode';
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-sun"></i> Field Mode';
       }
     }
 
-    // Initial run and 3-second cycle
-    syncDashboard();
-    setInterval(syncDashboard, 3000);
+    // Apply saved theme preference
+    const savedTheme = localStorage.getItem('agri_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    if (savedTheme === 'light') {
+      document.getElementById('themeBtn').innerHTML = '<i class="fa-solid fa-moon"></i> Night Mode';
+    }
+
+    async function syncFarmData() {
+      try {
+        const res = await fetch('/api/state', { cache: 'no-cache' });
+        if (!res.ok) throw new Error();
+        const d = await res.json();
+
+        // Online Badge
+        const pill = document.getElementById('connPill');
+        pill.className = 'connection-pill conn-online';
+        document.getElementById('connText').innerText = 'ONLINE';
+
+        // Health Score
+        const score = d.crop_health_score || 95;
+        document.getElementById('cropScore').innerText = score;
+        const tag = document.getElementById('healthStatusTag');
+        if (score >= 80) {
+          tag.innerHTML = '<i class="fa-solid fa-circle-check"></i> Crop Conditions Normal';
+          tag.style.color = 'var(--emerald)';
+        } else if (score >= 60) {
+          tag.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Moderate Moisture Attention Needed';
+          tag.style.color = 'var(--amber)';
+        } else {
+          tag.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Immediate Farm Action Needed';
+          tag.style.color = 'var(--rose)';
+        }
+
+        // Metrics
+        document.getElementById('valMoist').innerText = Number(d.field_moisture || 0).toFixed(1);
+        document.getElementById('valTemp').innerText = Number(d.air_temp || 0).toFixed(1);
+        document.getElementById('valHum').innerText = Number(d.air_humidity || 0).toFixed(1);
+        document.getElementById('valRain').innerText = d.rain_chance || 0;
+
+        // Weather Details
+        document.getElementById('valWind').innerText = (d.wind_speed || 0) + ' km/h';
+        document.getElementById('valUV').innerText = (d.uv_index || 0).toFixed(1);
+        document.getElementById('valVPD').innerText = (d.vpd || 0).toFixed(2) + ' kPa';
+
+        // Pump Badge
+        const pTag = document.getElementById('pumpTag');
+        const pTxt = document.getElementById('pumpText');
+        if (d.irrigation_status === 'ON') {
+          pTag.className = 'valve-badge valve-on';
+          pTxt.innerHTML = '<i class="fa-solid fa-faucet-drip"></i> WATERING ACTIVE';
+        } else {
+          pTag.className = 'valve-badge valve-off';
+          pTxt.innerHTML = '<i class="fa-solid fa-faucet"></i> PUMP RESTING';
+        }
+
+        document.getElementById('actionSummary').innerText = d.farm_action_summary || 'All parameters stable.';
+
+        // Foliage Inspection
+        if (d.leaf_diagnosis) {
+          document.getElementById('diseaseHeading').innerText = d.leaf_diagnosis;
+          document.getElementById('leafAccuracy').innerText = (d.diagnosis_accuracy || 0) + '% Conf';
+          document.getElementById('remedyText').innerText = d.treatment_advice || 'No treatment necessary.';
+        }
+
+        if (d.leaf_image) {
+          const img = document.getElementById('leafImg');
+          img.src = 'data:image/jpeg;base64,' + d.leaf_image;
+          img.style.display = 'block';
+          document.getElementById('noPhotoText').style.display = 'none';
+        }
+
+      } catch (e) {
+        const pill = document.getElementById('connPill');
+        pill.className = 'connection-pill conn-offline';
+        document.getElementById('connText').innerText = 'OFFLINE';
+      }
+    }
+
+    syncFarmData();
+    setInterval(syncFarmData, 3000);
   </script>
 </body>
 </html>
