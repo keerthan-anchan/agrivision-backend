@@ -12,18 +12,18 @@ import torchvision.models as models
 
 app = Flask(__name__)
 
-# --- Load Irrigation ML Model ---
+# --- Load Irrigation Decision Model ---
 MODEL_PATH = "irrigation_model.pkl"
 rf_model = None
 if os.path.exists(MODEL_PATH):
     try:
         import joblib
         rf_model = joblib.load(MODEL_PATH)
-        print("✓ Irrigation model loaded successfully.")
+        print("✓ Agronomic model loaded.")
     except Exception as e:
         print(f"Warning: Could not load irrigation model: {e}")
 
-# --- Tomato Disease Classes & Prescriptions ---
+# --- Tomato Disease Classes & Farmer Guidance ---
 TOMATO_CLASSES = [
     "Tomato - Healthy",
     "Tomato - Early Blight",
@@ -34,15 +34,14 @@ TOMATO_CLASSES = [
 ]
 
 TREATMENTS = {
-    "Tomato - Healthy": "Crop foliage is healthy. Maintain regular drip irrigation.",
-    "Tomato - Early Blight": "Fungicide required (Mancozeb or Copper spray). Prune lower infected leaves.",
-    "Tomato - Late Blight": "High humidity risk! Apply Metalaxyl immediately and avoid wetting leaves.",
-    "Tomato - Leaf Mold": "Improve canopy ventilation. Apply bio-fungicide or copper hydroxide.",
-    "Tomato - Bacterial Spot": "Apply copper-based bactericide. Disinfect pruning shears to prevent spread.",
-    "Tomato - Yellow Leaf Curl Virus": "Vector-borne (Whiteflies). Apply Neem oil or systemic insecticide."
+    "Tomato - Healthy": "Crop leaves are healthy. Keep standard irrigation active.",
+    "Tomato - Early Blight": "Foliage infection detected. Apply Mancozeb or Copper spray. Remove affected lower leaves.",
+    "Tomato - Late Blight": "High humidity risk! Apply systemic fungicide (Metalaxyl). Avoid wet leaves.",
+    "Tomato - Leaf Mold": "Improve row spacing for better air circulation. Apply bio-fungicide or copper spray.",
+    "Tomato - Bacterial Spot": "Bacterial spotting seen. Spray copper bactericide. Sanitize cutting tools.",
+    "Tomato - Yellow Leaf Curl Virus": "Viral symptom spread by whiteflies. Spray Neem oil or recommended insecticide."
 }
 
-# --- Vision Preprocessing Pipeline ---
 vision_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
@@ -54,25 +53,27 @@ mobilenet = models.mobilenet_v2(weights=models.MobileNet_V2_Weights.DEFAULT)
 mobilenet.classifier[1] = torch.nn.Linear(mobilenet.last_channel, len(TOMATO_CLASSES))
 mobilenet.eval()
 
-# Global State for Telemetry & Dashboard View
+# Global State Formatted for Farmer Dashboard
 latest_state = {
-    "soil_1": 0.0,
-    "soil_2": 0.0,
-    "soil_avg": 0.0,
-    "temp": 0.0,
-    "humidity": 0.0,
-    "rain_prob": 0,
+    "field_moisture": 0.0,
+    "root_zone_moisture": 0.0,
+    "air_temp": 0.0,
+    "air_humidity": 0.0,
+    "rain_chance": 0,
     "cloud_cover": 0,
-    "relay": "OFF",
-    "decision_reason": "Waiting for sensor telemetry...",
+    "wind_speed": 0.0,
+    "uv_index": 0.0,
+    "vpd": 0.0,
+    "irrigation_status": "OFF",
+    "farm_action_summary": "Syncing crop data...",
+    "crop_health_score": 95,
     "leaf_image": None,
-    "disease": "Awaiting leaf scan...",
-    "confidence": 0.0,
-    "treatment": "Hold camera 10–15 cm from tomato foliage."
+    "leaf_diagnosis": "No scan performed yet",
+    "diagnosis_accuracy": 0,
+    "treatment_advice": "Hold mobile camera or farm scanner facing tomato foliage."
 }
 
 def is_leaf_present(pil_img):
-    """Vegetation index gate to filter out non-plant objects."""
     img_rgb = np.array(pil_img.convert("RGB"), dtype=np.float32)
     r, g, b = img_rgb[:, :, 0], img_rgb[:, :, 1], img_rgb[:, :, 2]
     exg = (2.0 * g) - r - b
@@ -81,99 +82,116 @@ def is_leaf_present(pil_img):
     return ((green_pixels / total_pixels) * 100.0) >= 12.0
 
 def fetch_weather():
+    """Fetches full agronomic atmospheric indicators from Open-Meteo."""
     try:
-        url = "https://api.open-meteo.com/v1/forecast?latitude=12.9141&longitude=74.8560&current=cloud_cover&hourly=precipitation_probability&forecast_hours=3"
+        url = (
+            "https://api.open-meteo.com/v1/forecast?"
+            "latitude=12.9141&longitude=74.8560"
+            "&current=cloud_cover,wind_speed_10m,uv_index"
+            "&hourly=precipitation_probability"
+            "&forecast_hours=3"
+        )
         resp = requests.get(url, timeout=3)
         if resp.status_code == 200:
-            data = resp.json()
-            cloud = data.get("current", {}).get("cloud_cover", 0)
-            rain_hourly = data.get("hourly", {}).get("precipitation_probability", [0])
+            d = resp.json()
+            cloud = d.get("current", {}).get("cloud_cover", 0)
+            wind = d.get("current", {}).get("wind_speed_10m", 0.0)
+            uv = d.get("current", {}).get("uv_index", 0.0)
+            rain_hourly = d.get("hourly", {}).get("precipitation_probability", [0])
             rain_prob = rain_hourly[0] if rain_hourly else 0
-            return int(rain_prob), int(cloud)
+            return int(rain_prob), int(cloud), float(wind), float(uv)
     except Exception as e:
-        print(f"Weather API error: {e}")
-    return 0, 0
+        print(f"Weather error: {e}")
+    return 0, 0, 0.0, 0.0
 
-# --- Dashboard View ---
 @app.route("/", methods=["GET"])
-def dashboard():
+def index():
     return render_template("index.html")
 
-# --- Live Telemetry API (with full CORS and No-Cache) ---
 @app.route("/api/state", methods=["GET"])
 def get_state():
     resp = jsonify(latest_state)
     resp.headers["Access-Control-Allow-Origin"] = "*"
-    resp.headers["Access-Control-Allow-Headers"] = "Content-Type"
-    resp.headers["Access-Control-Allow-Methods"] = "GET, OPTIONS"
     resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    resp.headers["Pragma"] = "no-cache"
-    resp.headers["Expires"] = "0"
     return resp, 200
 
-# --- ESP32 Sensor Ingestion ---
 @app.route("/api/telemetry", methods=["POST"])
 def telemetry():
     global latest_state
     try:
         data = request.get_json(force=True, silent=True) or {}
+        
+        # Ingest field sensors
         s1 = float(data.get("soil_1", 0.0))
         s2 = float(data.get("soil_2", 0.0))
-        s_effective = (0.35 * s1) + (0.65 * s2)
-        temp = float(data.get("temp", 28.0))
-        hum = float(data.get("humidity", 70.0))
+        temp = float(data.get("temp", 28.5))
+        hum = float(data.get("humidity", 72.0))
 
-        rain_prob, cloud = fetch_weather()
+        # Effective root zone for tomato
+        s_effective = round((0.35 * s1) + (0.65 * s2), 1)
 
-        # Tetens equation for VPD
+        # Weather factors
+        rain_prob, cloud, wind, uv = fetch_weather()
+
+        # Vapor Pressure Deficit (VPD in kPa)
         svp = 0.61078 * np.exp((17.27 * temp) / (temp + 237.3))
         avp = svp * (hum / 100.0)
-        vpd = max(0.0, float(svp - avp))
+        vpd = round(max(0.0, float(svp - avp)), 2)
 
+        # Irrigation Decision
         relay_cmd = "OFF"
-        reason = "Optimal moisture balance for tomato roots."
+        summary = "Moisture is balanced. Roots are well-hydrated."
 
         if rf_model is not None:
-            # Check model feature dimensions dynamically
             n_features = getattr(rf_model, "n_features_in_", 5)
             if n_features == 6:
-                features = np.array([[s1, s2, temp, hum, rain_prob, vpd]])
+                feat = np.array([[s1, s2, temp, hum, rain_prob, vpd]])
             else:
-                features = np.array([[s_effective, temp, hum, rain_prob, cloud]])
-
-            pred = rf_model.predict(features)[0]
+                feat = np.array([[s_effective, temp, hum, rain_prob, cloud]])
+            pred = rf_model.predict(feat)[0]
             if pred == 1:
                 relay_cmd = "ON"
-                reason = f"Tomato Deficit: Root zone {s_effective:.1f}%, VPD {vpd:.2f} kPa, Rain {rain_prob}%."
+                summary = "Drip watering active: Tomato root moisture reached irrigation threshold."
             else:
                 relay_cmd = "OFF"
-                reason = f"Tomato Hydrated: Moisture adequate ({s_effective:.1f}%), Rain risk {rain_prob}%."
+                if rain_prob >= 50:
+                    summary = f"Conserving water: Rain forecast imminent ({rain_prob}% chance)."
+                else:
+                    summary = "Soil water reserves adequate. Pump is resting."
         else:
-            # Fallback agronomic rule
             if s_effective < 35.0 and rain_prob < 50:
                 relay_cmd = "ON"
-                reason = f"Fallback Rule: Low root zone moisture ({s_effective:.1f}%)."
+                summary = "Drip watering active: Soil is dry."
             else:
                 relay_cmd = "OFF"
-                reason = f"Fallback Rule: Moisture adequate ({s_effective:.1f}%)."
+                summary = "Moisture optimal."
+
+        # Compute Crop Health Index (0-100)
+        score = 100
+        if s_effective < 25.0: score -= 25
+        elif s_effective < 35.0: score -= 10
+        if vpd > 1.6: score -= 10
+        if "Blight" in latest_state.get("leaf_diagnosis", ""): score -= 30
 
         latest_state.update({
-            "soil_1": s1,
-            "soil_2": s2,
-            "soil_avg": s_effective,
-            "temp": temp,
-            "humidity": hum,
-            "rain_prob": rain_prob,
+            "field_moisture": s_effective,
+            "root_zone_moisture": s2,
+            "air_temp": temp,
+            "air_humidity": hum,
+            "rain_chance": rain_prob,
             "cloud_cover": cloud,
-            "relay": relay_cmd,
-            "decision_reason": reason
+            "wind_speed": wind,
+            "uv_index": uv,
+            "vpd": vpd,
+            "irrigation_status": relay_cmd,
+            "farm_action_summary": summary,
+            "crop_health_score": max(20, min(score, 100))
         })
 
-        return jsonify({"relay": relay_cmd, "reason": reason}), 200
+        return jsonify({"relay": relay_cmd, "reason": summary}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 400
 
-# --- ESP32-CAM Image Ingestion ---
 @app.route("/upload-leaf", methods=["POST"])
 def upload_leaf():
     global latest_state
@@ -185,47 +203,36 @@ def upload_leaf():
 
     try:
         pil_img = Image.open(io.BytesIO(img_bytes)).convert("RGB")
-
-        # Encode captured frame as base64 for display on web dashboard
         buffered = io.BytesIO()
         pil_img.save(buffered, format="JPEG", quality=70)
-        img_base64 = base64.b64encode(buffered.getvalue()).decode("utf-8")
-        latest_state["leaf_image"] = img_base64
+        latest_state["leaf_image"] = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
-        # Discard non-plant foliage
         if not is_leaf_present(pil_img):
-            latest_state["disease"] = "No Tomato Leaf Detected"
-            latest_state["confidence"] = 0.0
-            latest_state["treatment"] = "Point ESP32-CAM directly at a tomato leaf. Non-plant object ignored."
-            return jsonify({"status": "rejected", "reason": "No leaf found"}), 200
+            latest_state["leaf_diagnosis"] = "No Leaf Detected"
+            latest_state["diagnosis_accuracy"] = 0
+            latest_state["treatment_advice"] = "Please center a clear tomato leaf in the frame."
+            return jsonify({"status": "rejected"}), 200
 
-        # CNN Classification
         tensor = vision_transform(pil_img).unsqueeze(0).to(device)
         with torch.no_grad():
             outputs = mobilenet(tensor)
-            probabilities = torch.nn.functional.softmax(outputs[0], dim=0)
-            confidence, predicted_idx = torch.max(probabilities, 0)
+            probs = torch.nn.functional.softmax(outputs[0], dim=0)
+            confidence, predicted_idx = torch.max(probs, 0)
 
-        conf_score = round(confidence.item() * 100.0, 1)
+        conf_score = int(round(confidence.item() * 100.0))
 
-        if conf_score < 45.0:
-            disease_name = "Unclear Foliage / Low Light"
-            treatment = "Adjust ambient lighting and distance to 10–15 cm."
+        if conf_score < 45:
+            d_name = "Unclear Foliage Image"
+            t_advice = "Improve lighting and keep camera 10–15 cm from leaf."
         else:
-            disease_name = TOMATO_CLASSES[predicted_idx.item()]
-            treatment = TREATMENTS.get(disease_name, "Inspect leaf regularly.")
+            d_name = TOMATO_CLASSES[predicted_idx.item()]
+            t_advice = TREATMENTS.get(d_name, "Check crop regularly.")
 
-        latest_state["disease"] = disease_name
-        latest_state["confidence"] = conf_score
-        latest_state["treatment"] = treatment
+        latest_state["leaf_diagnosis"] = d_name
+        latest_state["diagnosis_accuracy"] = conf_score
+        latest_state["treatment_advice"] = t_advice
 
-        return jsonify({
-            "status": "success",
-            "disease": disease_name,
-            "confidence": conf_score,
-            "treatment": treatment
-        }), 200
-
+        return jsonify({"status": "success", "diagnosis": d_name}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
